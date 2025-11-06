@@ -1,0 +1,503 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aim Master 2025 — Open Source</title>
+  <meta name="description" content="Aim Master 2025 is a fast, responsive, open‑source aim trainer built with pure HTML, CSS, and JavaScript." />
+  <style>
+    /*
+      Aim Master 2025 — MIT Licensed
+      ------------------------------------------------------------
+      Copyright (c) 2025 DakshPermission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+*/
+
+:root{
+  --bg: #0b0f17;
+  --panel: #111827;
+  --ink: #e5e7eb;
+  --muted: #9ca3af;
+  --accent: #60a5fa;
+  --good: #34d399;
+  --bad: #f87171;
+  --warn: #fbbf24;
+  --ring: rgba(96,165,250,.35);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+  background: radial-gradient(1200px 800px at 20% -10%, #111927 0, var(--bg) 60%);
+  color:var(--ink);
+}
+
+header{
+  position:sticky; top:0; z-index:10;
+  backdrop-filter:saturate(140%) blur(8px);
+  background: rgba(11,15,23,.65);
+  border-bottom:1px solid #1f2937;
+}
+.wrap{max-width:1100px; margin:0 auto; padding:14px 16px;}
+nav{display:flex; gap:10px; align-items:center; justify-content:space-between;}
+.brand{display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:.3px}
+.brand .dot{width:10px; height:10px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 6px var(--ring)}
+
+.tabs{display:flex; gap:8px; flex-wrap:wrap}
+.tab{
+  padding:8px 12px; border:1px solid #1f2937; border-radius:10px; color:var(--muted);
+  background:#0b1320; cursor:pointer; user-select:none;
+}
+.tab.active{color:var(--ink); border-color:#2a3a52; background:#0e1726}
+.tab:focus{outline:2px solid var(--accent)}
+
+main{max-width:1100px; margin:18px auto; padding:0 16px 80px}
+section[data-page]{display:none}
+section[data-page].show{display:block}
+
+.panel{
+  background:linear-gradient(180deg,#0e1626,#0b111d); border:1px solid #1f2937; border-radius:16px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.35)
+}
+
+.grid{display:grid; gap:16px}
+.grid.cols{grid-template-columns:1.1fr .9fr}
+@media (max-width: 900px){.grid.cols{grid-template-columns:1fr}}
+
+.controls{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px}
+.controls label{font-size:.9rem; color:var(--muted)}
+.controls select, .controls input[type="range"], .controls input[type="checkbox"]{
+  width:100%; background:#0a1322; color:var(--ink); border:1px solid #1f2937; border-radius:10px; padding:8px; accent-color:var(--accent)
+}
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 14px; border-radius:12px; border:1px solid #2a3a52; background:#0e1726; color:var(--ink); cursor:pointer; user-select:none; font-weight:600
+}
+.btn.primary{background:linear-gradient(180deg,#1b2840,#142038); border-color:#2f4364}
+.btn:active{transform:translateY(1px)}
+
+.hud{display:flex; gap:12px; flex-wrap:wrap; align-items:center}
+.hud .chip{padding:8px 10px; border-radius:10px; background:#0b1320; border:1px solid #1f2937; color:var(--muted)}
+.hud .chip strong{color:var(--ink)}
+
+/* Game board */
+#boardWrap{position:relative;}
+#board{
+  position:relative; height:520px; width:100%; background:radial-gradient(600px 420px at 50% 0,#0d1728 0,#0a0f19 55%);
+  border:1px solid #1f2937; border-radius:18px; overflow:hidden; touch-action:manipulation;
+}
+#board.paused::after{
+  content:"PAUSED"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  color:#94a3b8; font-weight:800; letter-spacing:.4rem; background:rgba(0,0,0,.35)
+}
+
+.target{
+  position:absolute; border-radius:999px; background: radial-gradient(circle at 30% 30%, #fff, #ddd 25%, #bbb 60%, #999 100%);
+  box-shadow:0 0 0 3px #93c5fd, 0 0 30px rgba(96,165,250,.6);
+  display:grid; place-items:center; cursor:crosshair; user-select:none;
+}
+.target::after{
+  content:""; width:30%; height:30%; border-radius:999px; background:rgba(96,165,250,.65); box-shadow: inset 0 0 8px rgba(0,0,0,.4)
+}
+
+.pop{position:absolute; pointer-events:none; font-weight:800; color:var(--good); text-shadow:0 2px 10px rgba(0,0,0,.7)}
+.miss{color:var(--bad)}
+
+footer{
+  position:fixed; bottom:0; left:0; right:0; background:rgba(11,15,23,.8); border-top:1px solid #1f2937; backdrop-filter:saturate(140%) blur(8px);
+}
+footer .wrap{display:flex; justify-content:space-between; align-items:center; gap:8px}
+.small{font-size:.85rem; color:var(--muted)}
+a{color:var(--accent); text-decoration:none}
+a:hover{text-decoration:underline}
+
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <nav>
+        <div class="brand" aria-label="Aim Master 2025">
+          <div class="dot" aria-hidden="true"></div>
+          <span>Aim Master 2025</span>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Primary">
+          <button class="tab active" data-nav="home" role="tab" aria-selected="true">Home</button>
+          <button class="tab" data-nav="play" role="tab" aria-selected="false">Play</button>
+          <button class="tab" data-nav="about" role="tab" aria-selected="false">About</button>
+          <button class="tab" data-nav="credits" role="tab" aria-selected="false">Credits</button>
+        </div>
+      </nav>
+    </div>
+  </header>  <main>
+    <!-- HOME PAGE -->
+    <section class="grid cols show" data-page="home">
+      <div class="panel">
+        <h1 style="margin-top:4px">Sharpen your aim. Go for perfect.</h1>
+        <p class="small">Fast, responsive aim trainer you can play on any device. No installs, no accounts. Pure HTML/CSS/JS.
+        </p>
+        <div class="hud" style="margin:14px 0 8px">
+          <div class="chip">High Score: <strong id="highScoreHome">0</strong></div>
+          <div class="chip">Best Accuracy: <strong id="bestAccHome">0%</strong></div>
+          <div class="chip">Games Played: <strong id="gamesPlayedHome">0</strong></div>
+        </div>
+        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap">
+          <button id="ctaPlay" class="btn primary">Play Now</button>
+          <a href="#" id="docLink" class="btn" title="View source code">View Source (MIT)</a>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>How it works</h2>
+        <ol style="line-height:1.7">
+          <li>Pick difficulty and target size.</li>
+          <li>Hit as many targets as you can before the timer ends.</li>
+          <li>Accuracy and streaks boost your score. Misses hurt.</li>
+        </ol>
+        <p class="small">Tip: On mobile, use your thumb; on desktop, keep the mouse low‑latency (gaming mode helps).</p>
+      </div>
+    </section><!-- PLAY PAGE -->
+<section class="grid cols" data-page="play">
+  <div class="panel">
+    <div class="hud" aria-live="polite" style="margin-bottom:10px">
+      <div class="chip">Score: <strong id="score">0</strong></div>
+      <div class="chip">Time: <strong id="time">30</strong>s</div>
+      <div class="chip">Accuracy: <strong id="accuracy">100%</strong></div>
+      <div class="chip">Streak: <strong id="streak">0</strong></div>
+    </div>
+    <div id="boardWrap">
+      <div id="board" aria-label="Game board" role="application"></div>
+    </div>
+    <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap">
+      <button id="btnStart" class="btn primary">Start</button>
+      <button id="btnPause" class="btn" disabled>Pause</button>
+      <button id="btnReset" class="btn">Reset</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 style="margin-top:4px">Settings</h2>
+    <div class="controls">
+      <div>
+        <label for="difficulty">Difficulty</label>
+        <select id="difficulty">
+          <option value="easy">Easy</option>
+          <option value="normal" selected>Normal</option>
+          <option value="hard">Hard</option>
+          <option value="insane">Insane</option>
+        </select>
+      </div>
+      <div>
+        <label for="targetSize">Target size: <span id="sizeLabel">44</span> px</label>
+        <input id="targetSize" type="range" min="28" max="80" value="44" />
+      </div>
+      <div>
+        <label for="duration">Duration: <span id="durationLabel">30</span> s</label>
+        <input id="duration" type="range" min="15" max="90" step="5" value="30" />
+      </div>
+      <div>
+        <label><input id="sound" type="checkbox" /> Sound effects</label>
+      </div>
+    </div>
+    <hr style="border-color:#1f2937; margin:14px 0">
+    <div class="hud">
+      <div class="chip">High Score: <strong id="highScore">0</strong></div>
+      <div class="chip">Best Accuracy: <strong id="bestAcc">0%</strong></div>
+      <div class="chip">Games Played: <strong id="gamesPlayed">0</strong></div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT PAGE -->
+<section class="grid" data-page="about">
+  <div class="panel">
+    <h2>About</h2>
+    <p>
+      Aim Master 2025 is a lightweight aim trainer focused on latency and consistency. No frameworks, no build tools — just clean, readable code you can study and extend.
+    </p>
+    <ul>
+      <li>Mobile + desktop responsive</li>
+      <li>Local high score and stats</li>
+      <li>Accessible controls and ARIA labels</li>
+      <li>MIT licensed — open source</li>
+    </ul>
+  </div>
+</section>
+
+<!-- CREDITS PAGE -->
+<section class="grid" data-page="credits">
+  <div class="panel">
+    <h2>Credits</h2>
+    <p>Designed & built by <strong>Daksh</strong>. Game idea & implementation inspired by classic aim trainers.</p>
+    <p>License: <strong>MIT</strong>. You are free to use, modify, and distribute with attribution.</p>
+  </div>
+</section>
+
+  </main>  <footer>
+    <div class="wrap small">
+      <div>
+        &copy; 2025 AIM Masters — <span title="Open Source License">MIT</span>. All rights reserved.
+      </div>
+      <div>
+        <a href="#" id="footerSource">Source Code</a> · <a href="#about" data-nav="about">About</a> · <a href="#credits" data-nav="credits">Credits</a>
+      </div>
+    </div>
+  </footer>  <script>
+    // ======= Simple in-app router (no framework) =======
+    const pages = Array.from(document.querySelectorAll('section[data-page]'));
+    const tabs = Array.from(document.querySelectorAll('.tab'));
+    function showPage(name){
+      pages.forEach(p=>p.classList.toggle('show', p.dataset.page===name));
+      tabs.forEach(t=>{
+        const on = t.dataset.nav===name; t.classList.toggle('active', on); t.setAttribute('aria-selected', on);
+      });
+      if(name==='play') resizeBoard();
+    }
+    tabs.forEach(t=> t.addEventListener('click', ()=> showPage(t.dataset.nav)));
+    document.querySelectorAll('[data-nav]')?.forEach(l=> l.addEventListener('click', (e)=>{ e.preventDefault(); showPage(l.getAttribute('data-nav')); }));
+    document.getElementById('ctaPlay').addEventListener('click', ()=> showPage('play'));
+
+    // ======= Persistent storage =======
+    const store = {
+      get(key, fallback){ try { const v = JSON.parse(localStorage.getItem(key)); return (v==null? fallback : v); } catch { return fallback; } },
+      set(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+    };
+
+    const STATS_KEY = 'aimMaster2025_stats';
+    const DEFAULT_STATS = { highScore: 0, bestAcc: 0, games: 0 };
+    const stats = store.get(STATS_KEY, DEFAULT_STATS);
+
+    function syncStatsUI(){
+      const els = {
+        highScore: document.getElementById('highScore'),
+        bestAcc: document.getElementById('bestAcc'),
+        gamesPlayed: document.getElementById('gamesPlayed'),
+        highScoreHome: document.getElementById('highScoreHome'),
+        bestAccHome: document.getElementById('bestAccHome'),
+        gamesPlayedHome: document.getElementById('gamesPlayedHome'),
+      };
+      els.highScore.textContent = stats.highScore;
+      els.bestAcc.textContent = Math.round(stats.bestAcc) + '%';
+      els.gamesPlayed.textContent = stats.games;
+      els.highScoreHome.textContent = stats.highScore;
+      els.bestAccHome.textContent = Math.round(stats.bestAcc) + '%';
+      els.gamesPlayedHome.textContent = stats.games;
+    }
+    syncStatsUI();
+
+    // ======= Web Audio (tiny beep) =======
+    let audioCtx = null;
+    function beep(freq=880, time=0.06){
+      if(!document.getElementById('sound').checked) return;
+      if(!audioCtx){ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'square'; o.frequency.value = freq; g.gain.value = 0.06; o.connect(g); g.connect(audioCtx.destination);
+      o.start(); setTimeout(()=>{ o.stop(); o.disconnect(); g.disconnect(); }, time*1000);
+    }
+
+    // ======= Game logic =======
+    const board = document.getElementById('board');
+    const scoreEl = document.getElementById('score');
+    const timeEl = document.getElementById('time');
+    const accEl = document.getElementById('accuracy');
+    const streakEl = document.getElementById('streak');
+
+    const btnStart = document.getElementById('btnStart');
+    const btnPause = document.getElementById('btnPause');
+    const btnReset = document.getElementById('btnReset');
+
+    const difficultySel = document.getElementById('difficulty');
+    const targetSizeRange = document.getElementById('targetSize');
+    const sizeLabel = document.getElementById('sizeLabel');
+    const durationRange = document.getElementById('duration');
+    const durationLabel = document.getElementById('durationLabel');
+
+    const docLink = document.getElementById('docLink');
+    const footerSource = document.getElementById('footerSource');
+    const repoBlob = 'https://opensource.org/license/mit'; // Placeholder external reference to MIT; replace with your repo link if hosting
+    docLink.addEventListener('click', (e)=>{ e.preventDefault(); window.open(repoBlob, '_blank'); });
+    footerSource.addEventListener('click', (e)=>{ e.preventDefault(); window.open(repoBlob, '_blank'); });
+
+    let state = null, spawnTimer = null, countdown = null, paused = false;
+
+    function initialState(){
+      return {
+        score: 0,
+        hits: 0,
+        misses: 0,
+        streak: 0,
+        timeLeft: parseInt(durationRange.value,10),
+        size: parseInt(targetSizeRange.value,10),
+        difficulty: difficultySel.value,
+      };
+    }
+
+    function resizeBoard(){
+      // Keep a nice aspect on small screens
+      const rect = board.getBoundingClientRect();
+      board.style.height = Math.max(360, Math.min(560, Math.round(rect.width*0.52))) + 'px';
+    }
+    window.addEventListener('resize', resizeBoard, {passive:true});
+    resizeBoard();
+
+    function difficultyConfig(level){
+      switch(level){
+        case 'easy': return { spawnMs: 800, lifeMs: 1300, scoreBase: 10 };
+        case 'normal': return { spawnMs: 650, lifeMs: 1100, scoreBase: 15 };
+        case 'hard': return { spawnMs: 520, lifeMs: 900, scoreBase: 20 };
+        case 'insane': return { spawnMs: 420, lifeMs: 780, scoreBase: 25 };
+      }
+    }
+
+    function updateHUD(){
+      scoreEl.textContent = state.score;
+      timeEl.textContent = state.timeLeft;
+      streakEl.textContent = state.streak;
+      const total = state.hits + state.misses;
+      const acc = total ? (state.hits / total * 100) : 100;
+      accEl.textContent = Math.round(acc) + '%';
+    }
+
+    function rand(min, max){ return Math.random()*(max-min)+min; }
+
+    function spawnTarget(){
+      const {size, difficulty} = state;
+      const conf = difficultyConfig(difficulty);
+      const t = document.createElement('div');
+      t.className = 'target';
+      const s = size; t.style.width = s+'px'; t.style.height = s+'px';
+
+      const rect = board.getBoundingClientRect();
+      const pad = s + 12;
+      const x = rand(pad, rect.width - pad);
+      const y = rand(pad, rect.height - pad);
+      t.style.left = (x - s/2) + 'px';
+      t.style.top = (y - s/2) + 'px';
+
+      const timer = setTimeout(()=> missTarget(t), conf.lifeMs);
+
+      t.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        clearTimeout(timer);
+        board.removeChild(t);
+        state.hits++; state.streak++;
+        const gain = conf.scoreBase + Math.floor(state.streak*0.8);
+        state.score += gain; beep(920);
+        popText('+'+gain, x, y, false);
+        updateHUD();
+      }, { once:true });
+
+      board.appendChild(t);
+    }
+
+    function popText(text, x, y, miss){
+      const p = document.createElement('div'); p.className = 'pop' + (miss? ' miss' : ''); p.textContent = text;
+      p.style.left = (x - 6) + 'px'; p.style.top = (y - 8) + 'px';
+      board.appendChild(p);
+      const start = performance.now();
+      function anim(now){
+        const dt = now - start; const t = Math.min(1, dt/650);
+        p.style.transform = `translateY(${-22*t}px)`; p.style.opacity = String(1 - t);
+        if(t<1) requestAnimationFrame(anim); else board.removeChild(p);
+      }
+      requestAnimationFrame(anim);
+    }
+
+    function missTarget(elem){
+      if(!elem.isConnected) return; // already removed via hit
+      const rect = elem.getBoundingClientRect();
+      const parentRect = board.getBoundingClientRect();
+      const cx = rect.left - parentRect.left + rect.width/2;
+      const cy = rect.top - parentRect.top + rect.height/2;
+      board.removeChild(elem);
+      state.misses++; state.streak = 0; beep(220);
+      popText('\u2212', cx, cy, true);
+      updateHUD();
+    }
+
+    // Clicking empty board counts as miss (optional, improves discipline)
+    board.addEventListener('click', (e)=>{
+      if(!state) return;
+      // If user clicked directly on board (not target)
+      if(e.target === board){ state.misses++; state.streak = 0; beep(240); popText('miss', e.offsetX, e.offsetY, true); updateHUD(); }
+    });
+
+    function startGame(){
+      if(state) endGame();
+      state = initialState();
+      paused = false; board.classList.remove('paused');
+      board.innerHTML = '';
+      updateHUD();
+      const conf = difficultyConfig(state.difficulty);
+
+      spawnTimer = setInterval(()=>{ if(!paused) spawnTarget(); }, conf.spawnMs);
+      countdown = setInterval(()=>{
+        if(paused) return; 
+        state.timeLeft--; updateHUD();
+        if(state.timeLeft<=0){ endGame(); }
+      }, 1000);
+
+      btnPause.disabled = false; btnStart.disabled = true;
+    }
+
+    function endGame(){
+      if(spawnTimer) clearInterval(spawnTimer); spawnTimer = null;
+      if(countdown) clearInterval(countdown); countdown = null;
+      // Remove any leftover targets
+      Array.from(board.querySelectorAll('.target')).forEach(el=> el.remove());
+      if(state){
+        const total = state.hits + state.misses; const acc = total? (state.hits/total*100) : 100;
+        stats.highScore = Math.max(stats.highScore, state.score);
+        stats.bestAcc = Math.max(stats.bestAcc, acc);
+        stats.games += 1; store.set(STATS_KEY, stats); syncStatsUI();
+
+        const msg = document.createElement('div');
+        msg.className = 'pop'; msg.style.left = '16px'; msg.style.top = '16px';
+        msg.style.fontSize = '20px'; msg.textContent = `Score ${state.score} • Acc ${acc.toFixed(0)}%`;
+        board.appendChild(msg); setTimeout(()=> msg.remove(), 2000);
+      }
+      state = null; btnPause.disabled = true; btnPause.textContent = 'Pause'; btnStart.disabled = false; board.classList.remove('paused');
+    }
+
+    function pauseGame(){
+      if(!state) return;
+      paused = !paused; board.classList.toggle('paused', paused);
+      btnPause.textContent = paused? 'Resume' : 'Pause';
+    }
+
+    function resetGame(){ endGame(); board.innerHTML = ''; updateHUD(); }
+
+    btnStart.addEventListener('click', startGame);
+    btnPause.addEventListener('click', pauseGame);
+    btnReset.addEventListener('click', resetGame);
+
+    // Live labels
+    targetSizeRange.addEventListener('input', ()=>{ sizeLabel.textContent = targetSizeRange.value; if(state) state.size = parseInt(targetSizeRange.value,10); });
+    durationRange.addEventListener('input', ()=>{ durationLabel.textContent = durationRange.value; if(state) state.timeLeft = Math.min(state.timeLeft, parseInt(durationRange.value,10)); updateHUD(); });
+    difficultySel.addEventListener('change', ()=>{ if(state){ const was = difficultyConfig(state.difficulty); state.difficulty = difficultySel.value; const now = difficultyConfig(state.difficulty); if(spawnTimer){ clearInterval(spawnTimer); spawnTimer = setInterval(()=>{ if(!paused) spawnTarget(); }, now.spawnMs); } } });
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e)=>{
+      if(e.key.toLowerCase()==='p') pauseGame();
+      if(e.key===" "){ e.preventDefault(); if(!state) startGame(); else pauseGame(); }
+      if(e.key.toLowerCase()==='r') resetGame();
+    });
+
+    // Accessibility: announce on tab focus
+    board.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !state){ startGame(); } });
+  </script></body>
+</html>
